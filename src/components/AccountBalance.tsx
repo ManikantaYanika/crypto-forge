@@ -1,53 +1,71 @@
-import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
-
-interface BalanceItem {
-  label: string;
-  value: string;
-  change?: string;
-  isPositive?: boolean;
-  icon: React.ReactNode;
-}
+import { Wallet, TrendingUp, TrendingDown, DollarSign, RefreshCw } from "lucide-react";
+import { Button } from "./ui/button";
+import { useBinance } from "@/hooks/useBinance";
 
 export function AccountBalance() {
-  const balances: BalanceItem[] = [
+  const { balance, isConnected, refreshAccount, isLoading } = useBinance();
+
+  const formatNumber = (num: number | undefined) => {
+    if (num === undefined) return "0.00";
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const balanceItems = [
     {
       label: "Total Balance",
-      value: "125,432.58",
-      change: "+2.34%",
-      isPositive: true,
+      value: formatNumber(balance?.totalBalance),
+      change: balance?.unrealizedPnl ? `${balance.unrealizedPnl >= 0 ? '+' : ''}${((balance.unrealizedPnl / (balance.totalBalance || 1)) * 100).toFixed(2)}%` : undefined,
+      isPositive: balance?.unrealizedPnl ? balance.unrealizedPnl >= 0 : undefined,
       icon: <Wallet className="w-4 h-4" />,
     },
     {
       label: "Available",
-      value: "98,234.12",
+      value: formatNumber(balance?.availableBalance),
       icon: <DollarSign className="w-4 h-4" />,
     },
     {
       label: "Unrealized PnL",
-      value: "+3,847.23",
-      change: "+12.5%",
-      isPositive: true,
-      icon: <TrendingUp className="w-4 h-4" />,
+      value: `${balance?.unrealizedPnl && balance.unrealizedPnl >= 0 ? '+' : ''}${formatNumber(balance?.unrealizedPnl)}`,
+      isPositive: balance?.unrealizedPnl ? balance.unrealizedPnl >= 0 : undefined,
+      icon: balance?.unrealizedPnl && balance.unrealizedPnl >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />,
     },
     {
-      label: "Margin Used",
-      value: "27,198.46",
-      change: "21.7%",
+      label: "Margin Balance",
+      value: formatNumber(balance?.marginBalance),
       icon: <TrendingDown className="w-4 h-4" />,
     },
   ];
 
   return (
     <div className="glass-card p-5 animate-slide-up">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Wallet className="w-4 h-4 text-primary" />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Wallet className="w-4 h-4 text-primary" />
+          </div>
+          <h2 className="text-sm font-semibold text-foreground">Account Overview</h2>
         </div>
-        <h2 className="text-sm font-semibold text-foreground">Account Overview</h2>
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+            isConnected ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
+          }`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-success animate-pulse' : 'bg-destructive'}`} />
+            {isConnected ? 'Live' : 'Offline'}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={refreshAccount}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {balances.map((item, index) => (
+        {balanceItems.map((item, index) => (
           <div
             key={item.label}
             className="p-3 rounded-lg bg-secondary/50 border border-border/30 hover:border-primary/30 transition-colors"
@@ -58,13 +76,17 @@ export function AccountBalance() {
               <span className="text-xs text-muted-foreground">{item.label}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-semibold font-mono text-foreground">
+              <span className={`text-lg font-semibold font-mono ${
+                item.isPositive !== undefined 
+                  ? item.isPositive ? 'text-success' : 'text-destructive'
+                  : 'text-foreground'
+              }`}>
                 ${item.value}
               </span>
               {item.change && (
                 <span
                   className={`text-xs font-medium ${
-                    item.isPositive ? "text-success" : "text-muted-foreground"
+                    item.isPositive ? "text-success" : "text-destructive"
                   }`}
                 >
                   {item.change}

@@ -1,35 +1,80 @@
 import { useState } from "react";
-import { ArrowUpRight, ArrowDownRight, Info, Zap } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Info, Zap, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { useBinance } from "@/hooks/useBinance";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+
+const TRADING_PAIRS = [
+  "BTCUSDT",
+  "ETHUSDT",
+  "SOLUSDT",
+  "BNBUSDT",
+  "XRPUSDT",
+  "DOGEUSDT",
+];
 
 export function OrderForm() {
-  const [orderType, setOrderType] = useState<"market" | "limit">("market");
-  const [side, setSide] = useState<"buy" | "sell">("buy");
+  const { prices, placeOrder, isLoading, balance } = useBinance();
+  
+  const [orderType, setOrderType] = useState<"MARKET" | "LIMIT">("MARKET");
+  const [side, setSide] = useState<"BUY" | "SELL">("BUY");
+  const [symbol, setSymbol] = useState("BTCUSDT");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
-  const [symbol] = useState("BTCUSDT");
-  const [currentPrice] = useState("43,256.78");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const currentPrice = prices.find(p => p.symbol === symbol);
+  const priceDisplay = currentPrice?.price?.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  }) || "—";
+  const priceChange = currentPrice?.priceChangePercent?.toFixed(2) || "0";
+  const isPositive = currentPrice?.priceChangePercent ? currentPrice.priceChangePercent >= 0 : true;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!quantity) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a quantity",
-        variant: "destructive",
-      });
+    const qty = parseFloat(quantity);
+    if (!qty || qty <= 0) {
       return;
     }
 
-    toast({
-      title: "Order Submitted",
-      description: `${side.toUpperCase()} ${orderType.toUpperCase()} order for ${quantity} ${symbol}`,
-    });
+    setIsSubmitting(true);
+    try {
+      await placeOrder(
+        symbol,
+        side,
+        orderType,
+        qty,
+        orderType === "LIMIT" ? parseFloat(price) : undefined
+      );
+      setQuantity("");
+      setPrice("");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const estimatedValue = () => {
+    const qty = parseFloat(quantity) || 0;
+    const p = orderType === "LIMIT" ? parseFloat(price) : (currentPrice?.price || 0);
+    return (qty * p).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const setPercentage = (pct: number) => {
+    if (!balance?.availableBalance || !currentPrice?.price) return;
+    const maxValue = balance.availableBalance * (pct / 100);
+    const maxQty = maxValue / currentPrice.price;
+    setQuantity(maxQty.toFixed(4));
   };
 
   return (
@@ -41,9 +86,20 @@ export function OrderForm() {
           </div>
           <h2 className="text-sm font-semibold text-foreground">New Order</h2>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-secondary">
-          <span className="text-xs font-medium text-foreground">{symbol}</span>
-        </div>
+      </div>
+
+      {/* Symbol Selector */}
+      <div className="mb-4">
+        <Select value={symbol} onValueChange={setSymbol}>
+          <SelectTrigger className="bg-secondary/50 border-border/50">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TRADING_PAIRS.map(pair => (
+              <SelectItem key={pair} value={pair}>{pair}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Current Price Display */}
@@ -51,10 +107,10 @@ export function OrderForm() {
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">Current Price</span>
           <div className="flex items-center gap-1">
-            <span className="text-lg font-bold font-mono text-foreground">${currentPrice}</span>
-            <span className="text-xs text-success flex items-center gap-0.5">
-              <ArrowUpRight className="w-3 h-3" />
-              +1.24%
+            <span className="text-lg font-bold font-mono text-foreground">${priceDisplay}</span>
+            <span className={`text-xs flex items-center gap-0.5 ${isPositive ? 'text-success' : 'text-destructive'}`}>
+              {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+              {isPositive ? '+' : ''}{priceChange}%
             </span>
           </div>
         </div>
@@ -62,12 +118,12 @@ export function OrderForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Order Type Tabs */}
-        <Tabs value={orderType} onValueChange={(v) => setOrderType(v as "market" | "limit")}>
+        <Tabs value={orderType} onValueChange={(v) => setOrderType(v as "MARKET" | "LIMIT")}>
           <TabsList className="grid w-full grid-cols-2 bg-secondary/50">
-            <TabsTrigger value="market" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+            <TabsTrigger value="MARKET" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               Market
             </TabsTrigger>
-            <TabsTrigger value="limit" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+            <TabsTrigger value="LIMIT" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               Limit
             </TabsTrigger>
           </TabsList>
@@ -77,18 +133,18 @@ export function OrderForm() {
         <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
-            variant={side === "buy" ? "buy" : "outline"}
+            variant={side === "BUY" ? "buy" : "outline"}
             className="h-11"
-            onClick={() => setSide("buy")}
+            onClick={() => setSide("BUY")}
           >
             <ArrowUpRight className="w-4 h-4" />
             Long / Buy
           </Button>
           <Button
             type="button"
-            variant={side === "sell" ? "sell" : "outline"}
+            variant={side === "SELL" ? "sell" : "outline"}
             className="h-11"
-            onClick={() => setSide("sell")}
+            onClick={() => setSide("SELL")}
           >
             <ArrowDownRight className="w-4 h-4" />
             Short / Sell
@@ -96,7 +152,7 @@ export function OrderForm() {
         </div>
 
         {/* Price Input (for Limit orders) */}
-        {orderType === "limit" && (
+        {orderType === "LIMIT" && (
           <div className="space-y-2">
             <Label htmlFor="price" className="text-xs text-muted-foreground flex items-center gap-1">
               Price (USDT)
@@ -104,8 +160,9 @@ export function OrderForm() {
             </Label>
             <Input
               id="price"
-              type="text"
-              placeholder="0.00"
+              type="number"
+              step="0.01"
+              placeholder={priceDisplay}
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               className="font-mono bg-secondary/50 border-border/50 focus:border-primary/50"
@@ -116,25 +173,28 @@ export function OrderForm() {
         {/* Quantity Input */}
         <div className="space-y-2">
           <Label htmlFor="quantity" className="text-xs text-muted-foreground flex items-center gap-1">
-            Quantity (BTC)
+            Quantity ({symbol.replace('USDT', '')})
             <Info className="w-3 h-3" />
           </Label>
           <Input
             id="quantity"
-            type="text"
+            type="number"
+            step="0.0001"
             placeholder="0.000"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             className="font-mono bg-secondary/50 border-border/50 focus:border-primary/50"
+            required
           />
           <div className="flex gap-2">
-            {["25%", "50%", "75%", "100%"].map((pct) => (
+            {[25, 50, 75, 100].map((pct) => (
               <button
                 key={pct}
                 type="button"
+                onClick={() => setPercentage(pct)}
                 className="flex-1 py-1 text-xs text-muted-foreground hover:text-primary bg-secondary/50 rounded border border-border/30 hover:border-primary/30 transition-colors"
               >
-                {pct}
+                {pct}%
               </button>
             ))}
           </div>
@@ -144,22 +204,30 @@ export function OrderForm() {
         <div className="p-3 rounded-lg bg-secondary/30 border border-border/30 space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Order Value</span>
-            <span className="font-mono text-foreground">$0.00</span>
+            <span className="font-mono text-foreground">${estimatedValue()}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Est. Fee</span>
-            <span className="font-mono text-foreground">$0.00</span>
+            <span className="text-muted-foreground">Available</span>
+            <span className="font-mono text-foreground">
+              ${balance?.availableBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+            </span>
           </div>
         </div>
 
         {/* Submit Button */}
         <Button
           type="submit"
-          variant={side === "buy" ? "buy" : "sell"}
+          variant={side === "BUY" ? "buy" : "sell"}
           size="xl"
           className="w-full"
+          disabled={isLoading || isSubmitting || !quantity}
         >
-          {side === "buy" ? (
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Placing Order...
+            </>
+          ) : side === "BUY" ? (
             <>
               <ArrowUpRight className="w-5 h-5" />
               Place Buy Order

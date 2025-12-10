@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      account_balance: {
+        Row: {
+          asset: string
+          available_balance: number
+          id: string
+          margin_balance: number
+          total_balance: number
+          unrealized_pnl: number
+          updated_at: string
+        }
+        Insert: {
+          asset?: string
+          available_balance?: number
+          id?: string
+          margin_balance?: number
+          total_balance?: number
+          unrealized_pnl?: number
+          updated_at?: string
+        }
+        Update: {
+          asset?: string
+          available_balance?: number
+          id?: string
+          margin_balance?: number
+          total_balance?: number
+          unrealized_pnl?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          average_price: number | null
+          client_order_id: string | null
+          commission: number | null
+          commission_asset: string | null
+          created_at: string
+          executed_at: string | null
+          filled_quantity: number | null
+          id: string
+          order_id: string | null
+          order_type: string
+          price: number | null
+          quantity: number
+          raw_response: Json | null
+          side: string
+          status: string
+          stop_price: number | null
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          average_price?: number | null
+          client_order_id?: string | null
+          commission?: number | null
+          commission_asset?: string | null
+          created_at?: string
+          executed_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          order_id?: string | null
+          order_type: string
+          price?: number | null
+          quantity: number
+          raw_response?: Json | null
+          side: string
+          status?: string
+          stop_price?: number | null
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          average_price?: number | null
+          client_order_id?: string | null
+          commission?: number | null
+          commission_asset?: string | null
+          created_at?: string
+          executed_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          order_id?: string | null
+          order_type?: string
+          price?: number | null
+          quantity?: number
+          raw_response?: Json | null
+          side?: string
+          status?: string
+          stop_price?: number | null
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      positions: {
+        Row: {
+          created_at: string
+          entry_price: number
+          id: string
+          leverage: number
+          liquidation_price: number | null
+          margin_type: string | null
+          mark_price: number | null
+          side: string
+          size: number
+          symbol: string
+          unrealized_pnl: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entry_price: number
+          id?: string
+          leverage?: number
+          liquidation_price?: number | null
+          margin_type?: string | null
+          mark_price?: number | null
+          side: string
+          size?: number
+          symbol: string
+          unrealized_pnl?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entry_price?: number
+          id?: string
+          leverage?: number
+          liquidation_price?: number | null
+          margin_type?: string | null
+          mark_price?: number | null
+          side?: string
+          size?: number
+          symbol?: string
+          unrealized_pnl?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      price_tickers: {
+        Row: {
+          high_24h: number | null
+          id: string
+          low_24h: number | null
+          price: number
+          price_change: number | null
+          price_change_percent: number | null
+          symbol: string
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          high_24h?: number | null
+          id?: string
+          low_24h?: number | null
+          price: number
+          price_change?: number | null
+          price_change_percent?: number | null
+          symbol: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          high_24h?: number | null
+          id?: string
+          low_24h?: number | null
+          price?: number
+          price_change?: number | null
+          price_change_percent?: number | null
+          symbol?: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      trading_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          latency_ms: number | null
+          log_type: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          latency_ms?: number | null
+          log_type: string
+          message: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          latency_ms?: number | null
+          log_type?: string
+          message?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

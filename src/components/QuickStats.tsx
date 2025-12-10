@@ -1,35 +1,44 @@
-import { Clock, BarChart2, Activity, Percent } from "lucide-react";
-
-interface Stat {
-  label: string;
-  value: string;
-  subValue?: string;
-  icon: React.ReactNode;
-}
+import { BarChart2, Activity, Percent, Zap } from "lucide-react";
+import { useBinance } from "@/hooks/useBinance";
 
 export function QuickStats() {
-  const stats: Stat[] = [
+  const { prices, balance, positions } = useBinance();
+
+  const btcTicker = prices.find(p => p.symbol === 'BTCUSDT');
+  
+  const totalPnl = positions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
+  const totalMargin = positions.reduce((sum, p) => sum + (p.size * p.entryPrice / p.leverage), 0);
+
+  const formatVolume = (volume: number) => {
+    if (volume >= 1000000000) return `$${(volume / 1000000000).toFixed(2)}B`;
+    if (volume >= 1000000) return `$${(volume / 1000000).toFixed(2)}M`;
+    return `$${volume.toFixed(2)}`;
+  };
+
+  const stats = [
     {
-      label: "24h Volume",
-      value: "$2.4B",
-      subValue: "+12.5%",
+      label: "24h Volume (BTC)",
+      value: btcTicker ? formatVolume(btcTicker.volume24h * btcTicker.price) : "—",
+      subValue: btcTicker ? `${(btcTicker.priceChangePercent >= 0 ? '+' : '')}${btcTicker.priceChangePercent.toFixed(2)}%` : undefined,
+      isPositive: btcTicker?.priceChangePercent ? btcTicker.priceChangePercent >= 0 : undefined,
       icon: <BarChart2 className="w-4 h-4" />,
     },
     {
       label: "24h High",
-      value: "$43,850",
+      value: btcTicker ? `$${btcTicker.high24h.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : "—",
       icon: <Activity className="w-4 h-4" />,
     },
     {
       label: "24h Low",
-      value: "$41,200",
+      value: btcTicker ? `$${btcTicker.low24h.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : "—",
       icon: <Activity className="w-4 h-4" />,
     },
     {
-      label: "Funding Rate",
-      value: "0.0100%",
-      subValue: "in 2h 34m",
-      icon: <Percent className="w-4 h-4" />,
+      label: "Open Positions",
+      value: positions.length.toString(),
+      subValue: totalPnl !== 0 ? `PnL: $${totalPnl.toFixed(2)}` : undefined,
+      isPositive: totalPnl >= 0,
+      icon: <Zap className="w-4 h-4" />,
     },
   ];
 
@@ -46,7 +55,13 @@ export function QuickStats() {
               <div className="flex items-baseline gap-1">
                 <span className="text-sm font-semibold font-mono text-foreground">{stat.value}</span>
                 {stat.subValue && (
-                  <span className="text-xs text-success">{stat.subValue}</span>
+                  <span className={`text-xs ${
+                    stat.isPositive !== undefined 
+                      ? stat.isPositive ? 'text-success' : 'text-destructive'
+                      : 'text-muted-foreground'
+                  }`}>
+                    {stat.subValue}
+                  </span>
                 )}
               </div>
             </div>
