@@ -1,9 +1,9 @@
 import { Wallet, TrendingUp, TrendingDown, DollarSign, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
-import { useBinance } from "@/hooks/useBinance";
+import { useTradingContext } from "@/contexts/TradingContext";
 
 export function AccountBalance() {
-  const { balance, isConnected, refreshAccount, isLoading } = useBinance();
+  const { balance, isConnected, refreshAccount, isLoading } = useTradingContext();
 
   const formatNumber = (num: number | undefined) => {
     if (num === undefined) return "0.00";
