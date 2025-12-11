@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
-import { useBinance } from "@/hooks/useBinance";
+import { useTradingContext } from "@/contexts/TradingContext";
 import {
   Select,
   SelectContent,
@@ -23,7 +23,7 @@ const TRADING_PAIRS = [
 ];
 
 export function OrderForm() {
-  const { prices, placeOrder, isLoading, balance } = useBinance();
+  const { prices, placeOrder, isLoading, balance } = useTradingContext();
   
   const [orderType, setOrderType] = useState<"MARKET" | "LIMIT">("MARKET");
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");

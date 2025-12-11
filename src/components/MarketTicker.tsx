@@ -1,9 +1,9 @@
 import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
-import { useBinance } from "@/hooks/useBinance";
+import { useTradingContext } from "@/contexts/TradingContext";
 
 export function MarketTicker() {
-  const { prices, refreshPrices, isLoading, isConnected } = useBinance();
+  const { prices, refreshPrices, isLoading, isConnected } = useTradingContext();
 
   const formatPrice = (price: number) => {
     if (price >= 1000) {

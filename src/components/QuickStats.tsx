@@ -1,8 +1,8 @@
-import { BarChart2, Activity, Percent, Zap } from "lucide-react";
-import { useBinance } from "@/hooks/useBinance";
+import { BarChart2, Activity, Zap } from "lucide-react";
+import { useTradingContext } from "@/contexts/TradingContext";
 
 export function QuickStats() {
-  const { prices, balance, positions } = useBinance();
+  const { prices, balance, positions } = useTradingContext();
 
   const btcTicker = prices.find(p => p.symbol === 'BTCUSDT');
   

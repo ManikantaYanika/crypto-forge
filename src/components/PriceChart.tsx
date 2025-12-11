@@ -1,7 +1,7 @@
 import { TrendingUp, TrendingDown, BarChart3, CandlestickChart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { useBinance } from "@/hooks/useBinance";
+import { useTradingContext } from "@/contexts/TradingContext";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,7 @@ const timeframes = ["1m", "5m", "15m", "1h", "4h", "1D"];
 const TRADING_PAIRS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"];
 
 export function PriceChart() {
-  const { prices } = useBinance();
+  const { prices } = useTradingContext();
   const [activeTimeframe, setActiveTimeframe] = useState("15m");
   const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
   const [priceHistory, setPriceHistory] = useState<number[]>([]);

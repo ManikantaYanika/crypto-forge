@@ -8,10 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { useBinance } from "@/hooks/useBinance";
+import { useTradingContext } from "@/contexts/TradingContext";
 import { format } from "date-fns";
 
-type OrderStatus = "FILLED" | "CANCELED" | "PENDING" | "PARTIALLY_FILLED" | "NEW" | "REJECTED" | "EXPIRED";
+type OrderStatus = "FILLED" | "CANCELED" | "PENDING" | "PARTIALLY_FILLED" | "NEW" | "REJECTED" | "EXPIRED" | "OPEN";
 
 const statusConfig: Record<string, { icon: React.ReactNode; className: string }> = {
   FILLED: {
@@ -38,6 +38,10 @@ const statusConfig: Record<string, { icon: React.ReactNode; className: string }>
     icon: <Clock className="w-3.5 h-3.5" />,
     className: "bg-warning/10 text-warning",
   },
+  OPEN: {
+    icon: <Clock className="w-3.5 h-3.5" />,
+    className: "bg-primary/10 text-primary",
+  },
   PARTIALLY_FILLED: {
     icon: <AlertCircle className="w-3.5 h-3.5" />,
     className: "bg-primary/10 text-primary",
@@ -45,7 +49,7 @@ const statusConfig: Record<string, { icon: React.ReactNode; className: string }>
 };
 
 export function OrderHistory() {
-  const { orders, refreshOrders, isLoading } = useBinance();
+  const { orders, refreshOrders, isLoading } = useTradingContext();
 
   const formatTime = (dateString: string) => {
     try {

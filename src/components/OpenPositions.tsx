@@ -1,4 +1,4 @@
-import { ArrowUpRight, ArrowDownRight, X, RefreshCw } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Table,
@@ -8,10 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { useBinance } from "@/hooks/useBinance";
+import { useTradingContext } from "@/contexts/TradingContext";
 
 export function OpenPositions() {
-  const { positions, prices, refreshAccount, isLoading } = useBinance();
+  const { positions, prices, refreshAccount, isLoading } = useTradingContext();
 
   const getMarkPrice = (symbol: string) => {
     const ticker = prices.find(p => p.symbol === symbol);
