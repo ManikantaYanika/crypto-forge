@@ -225,9 +225,9 @@ export function useBinance() {
     fetchAccount();
     fetchOrders();
 
-    // Set up price polling (every 5 seconds)
-    const priceInterval = setInterval(fetchPrices, 5000);
-    const accountInterval = setInterval(fetchAccount, 10000);
+    // Set up price polling (every 3 seconds for more responsive updates)
+    const priceInterval = setInterval(fetchPrices, 3000);
+    const accountInterval = setInterval(fetchAccount, 8000);
 
     return () => {
       clearInterval(priceInterval);
@@ -235,7 +235,7 @@ export function useBinance() {
     };
   }, [fetchPrices, fetchAccount, fetchOrders]);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates for all tables
   useEffect(() => {
     const channel = supabase
       .channel('trading-updates')
@@ -244,6 +244,37 @@ export function useBinance() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'positions' }, () => {
         fetchAccount();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'price_tickers' }, (payload) => {
+        // Real-time price updates from database
+        const newPrice = payload.new as any;
+        if (newPrice) {
+          setPrices(prev => prev.map(p => 
+            p.symbol === newPrice.symbol 
+              ? { 
+                  ...p, 
+                  price: parseFloat(newPrice.price),
+                  priceChange: parseFloat(newPrice.price_change || '0'),
+                  priceChangePercent: parseFloat(newPrice.price_change_percent || '0'),
+                  high24h: parseFloat(newPrice.high_24h || '0'),
+                  low24h: parseFloat(newPrice.low_24h || '0'),
+                  volume24h: parseFloat(newPrice.volume_24h || '0'),
+                }
+              : p
+          ));
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'account_balance' }, (payload) => {
+        // Real-time balance updates
+        const newBalance = payload.new as any;
+        if (newBalance) {
+          setBalance({
+            totalBalance: parseFloat(newBalance.total_balance),
+            availableBalance: parseFloat(newBalance.available_balance),
+            marginBalance: parseFloat(newBalance.margin_balance),
+            unrealizedPnl: parseFloat(newBalance.unrealized_pnl),
+          });
+        }
       })
       .subscribe();
 

@@ -51,14 +51,22 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+    // Validate API credentials
     if (!BINANCE_API_KEY || !BINANCE_API_SECRET) {
-      throw new Error('Binance API credentials not configured');
+      console.error('Missing Binance API credentials');
+      throw new Error('Binance API credentials not configured. Please add BINANCE_API_KEY and BINANCE_API_SECRET secrets.');
+    }
+
+    // Validate key format (Binance Futures Testnet keys should be 64 characters)
+    if (BINANCE_API_KEY.length < 10) {
+      console.error('Invalid API key format - too short');
+      throw new Error('Invalid BINANCE_API_KEY format. Please use Binance Futures Testnet API key from testnet.binancefuture.com');
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     const { action, ...params } = await req.json();
-    console.log(`Processing action: ${action}`, params);
+    console.log(`Processing action: ${action}`, JSON.stringify(params));
 
     let result;
     let latency;
