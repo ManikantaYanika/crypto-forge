@@ -57,11 +57,8 @@ serve(async (req) => {
       throw new Error('Binance API credentials not configured. Please add BINANCE_API_KEY and BINANCE_API_SECRET secrets.');
     }
 
-    // Validate key format (Binance Futures Testnet keys should be 64 characters)
-    if (BINANCE_API_KEY.length < 10) {
-      console.error('Invalid API key format - too short');
-      throw new Error('Invalid BINANCE_API_KEY format. Please use Binance Futures Testnet API key from testnet.binancefuture.com');
-    }
+    // Log key info for debugging (first 8 chars only for security)
+    console.log(`API Key starts with: ${BINANCE_API_KEY.substring(0, 8)}... (length: ${BINANCE_API_KEY.length})`);
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -200,15 +197,26 @@ serve(async (req) => {
         const timestamp = Date.now();
         const queryString = `timestamp=${timestamp}`;
         const signature = createSignature(queryString, BINANCE_API_SECRET);
+        const url = `${BINANCE_TESTNET_URL}/fapi/v2/account?${queryString}&signature=${signature}`;
 
-        const response = await fetch(`${BINANCE_TESTNET_URL}/fapi/v2/account?${queryString}&signature=${signature}`, {
+        console.log(`Fetching account from: ${BINANCE_TESTNET_URL}`);
+        
+        const response = await fetch(url, {
           headers: { 'X-MBX-APIKEY': BINANCE_API_KEY },
         });
 
         latency = Date.now() - startTime;
-        result = await response.json();
+        const responseText = await response.text();
+        console.log(`Binance response status: ${response.status}, body: ${responseText.substring(0, 200)}`);
+        
+        try {
+          result = JSON.parse(responseText);
+        } catch {
+          throw new Error(`Invalid JSON response: ${responseText}`);
+        }
 
         if (!response.ok) {
+          console.error(`Binance API Error - Code: ${result.code}, Msg: ${result.msg}`);
           throw new Error(result.msg || 'Failed to get account');
         }
 
